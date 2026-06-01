@@ -1,9 +1,16 @@
+---
+description: 세션 데이터를 분석해 한국어 바이브 코딩 블로그 포스트를 작성하고 Notion에 업로드
+---
+
 세션 데이터를 분석해서 전문적인 한국어 바이브 코딩 블로그 포스트를 직접 작성하고 Notion에 업로드한다.
+
+> **OS 자동 판단**: Windows(로컬)면 PowerShell, Linux/Mac(클라우드 세션 VM)이면 bash 블록을 쓴다. 한쪽이 실패하면 다른 쪽을 시도한다.
 
 ---
 
 ## Step 1 — transcript 찾기
 
+**Windows (PowerShell):**
 ```powershell
 $cwd = (Get-Location).Path
 $cwdEnc = $cwd -replace '[\\:/\s]', '-' -replace '-+', '-'
@@ -17,6 +24,13 @@ if (-not $transcript) { Write-Host "transcript를 찾지 못했습니다."; exit
 Write-Host $transcript
 ```
 
+**Linux/Mac (bash):**
+```bash
+transcript=$(ls -t "$HOME/.claude/projects/"*/*.jsonl 2>/dev/null | head -1)
+if [ -z "$transcript" ]; then echo "transcript를 찾지 못했습니다."; exit 0; fi
+echo "$transcript"
+```
+
 찾은 transcript 경로를 보여주고 "이 transcript로 진행할까요?" 확인을 받는다.
 
 ---
@@ -25,9 +39,15 @@ Write-Host $transcript
 
 확인 후 실행:
 
+**Windows (PowerShell):**
 ```powershell
 $data = python "$env:USERPROFILE\vibe-coding-tools\parse_transcript.py" $transcript --json
 Write-Host $data
+```
+
+**Linux/Mac (bash):**
+```bash
+python3 "$HOME/vibe-coding-tools/parse_transcript.py" "$transcript" --json
 ```
 
 `too_short: true`이면 "이 세션은 블로그로 올리기에는 프롬프트/수정 내용이 너무 적습니다."라고 한국어로 알리고 종료한다.
@@ -97,10 +117,18 @@ Write-Host $data
 
 작성한 마크다운을 저장:
 
+**Windows (PowerShell):**
 ```powershell
 $draftDir = "$env:USERPROFILE\vibe-coding-drafts"
 New-Item -ItemType Directory -Force -Path $draftDir | Out-Null
 $draftPath = Join-Path $draftDir "$(Get-Date -Format 'yyyy-MM-dd_HHmm').md"
+# 작성한 마크다운을 $draftPath에 저장
+```
+
+**Linux/Mac (bash):**
+```bash
+mkdir -p "$HOME/vibe-coding-drafts"
+draftPath="$HOME/vibe-coding-drafts/$(date +%Y-%m-%d_%H%M).md"
 # 작성한 마크다운을 $draftPath에 저장
 ```
 
